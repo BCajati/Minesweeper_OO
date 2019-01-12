@@ -8,23 +8,38 @@ namespace Minesweeper
         private readonly List<Square> squares = new List<Square>();
         private readonly int rows;
         private readonly int cols;
+        private readonly string YouLost = "Sorry you Lost!";
+        private bool GameLost = false;
+        private int maxBombs;
 
         public Board(int numRows, int numCols)
         {
             rows = numRows;
             cols = numCols;
+            maxBombs = (rows * cols) / 5;
+            var numBombs = 0;
 
-            bool isBomb = false;
             Random rnd = new Random();
             for(var x=0; x < numRows; x++)
             {
                 for (var y = 0; y < numCols; y++)
                 {
                     int mIndex = rnd.Next();
-                    isBomb = mIndex % 2 == 0;
+                    var isBomb = AddBomb(x, numBombs, mIndex);
+                    if (isBomb)
+                        ++numBombs;
                     squares.Add(new Square() { xCoordinate = x, yCoordinate = y, IsBomb = isBomb });
                 }
             }
+        }
+
+        public bool AddBomb( int row, int numBombs,  int randomIndex)
+        {
+            if (numBombs == maxBombs)
+                return false;
+
+            return randomIndex % rows == 0;
+
         }
 
         public List<Square> GetSquares()
@@ -57,32 +72,29 @@ namespace Minesweeper
         {
             var foundSquare = FindSquare(row, col);
             foundSquare.PickSquare();
+            if (foundSquare.IsBomb)
+                GameLost = true;
+
+            if (!foundSquare.IsBomb)
+            {
+                // set value
+                var adjacent = FindAdjacentSquares(row, col);
+                int numNearBombs = 0;
+                foreach(var sq in adjacent)
+                {
+                    if (sq.IsBomb)
+                    {
+                        ++numNearBombs;
+                    }
+                }
+                foundSquare.NumBombNeighbors = numNearBombs;
+            }
         }
-
-        //public List<Square> FindAdjacentSquares(int row, int col)
-        //{
-        //    var adjacentSquares = new List<Square>();
-
-        //    // row above
-        //    if (row > 0)
-        //    {
-        //        adjacentSquares.AddRange(AdjacentRow(row - 1, col));
-        //    }
-        //    // row below
-        //    if (row < rows)
-        //    {
-        //        adjacentSquares.AddRange(AdjacentRow(row + 1, col));
-        //    }
-
-        //    return new List<Square>();
-        //}
-
 
         public List<Square> FindAdjacentSquares(int row, int col)
         {
             var adjacentSquares = new List<Square>();
 
-            //// range of squares
             var fromRow = row > 0 ? row - 1 : row;
             var fromCol = col > 0 ? col - 1 : col;
             var toRow = row < rows-1 ? row + 1 : row;
@@ -110,24 +122,21 @@ namespace Minesweeper
             return squares;
         }
 
-        public void DisplayBombs()
-        {
-            foreach (Square s in squares)
-            {
-                Console.Write($"{s.xCoordinate}, {s.yCoordinate}, {s.IsBomb}  ");
-            }
-            Console.ReadLine();
-        }
-
         public void DisplayBoard()
         {
+            if (GameLost)
+                Console.WriteLine(YouLost);
+
             for (var x = 0; x < rows; x++)
             {
                 for (var y = 0; y < cols; y++)
                 {
                     var nextSquare = FindSquare(x, y);
+                    if (GameLost && nextSquare.IsBomb)
+                    {
+                        nextSquare.PickSquare();
+                    }
                     Console.Write(nextSquare.ShowSquare());
-
                 }
                 Console.WriteLine();
             }

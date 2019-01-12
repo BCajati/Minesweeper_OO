@@ -7,12 +7,13 @@ namespace Minesweeper
     public class Square
     {
         private string Hidden = "X";
+        private string Bomb = "*";
 
         public int xCoordinate { get; set; }
         public int yCoordinate { get; set; }
         public bool IsBomb { get; set; }
         private bool IsVisible;
-        private int NumBombNeighbors { get; set; }
+        public int NumBombNeighbors { get; set; }
 
         public Square()
         {
@@ -26,7 +27,14 @@ namespace Minesweeper
 
         public string ShowSquare()
         {
-            return IsVisible ? NumBombNeighbors.ToString() : Hidden;
+            if (!IsVisible)
+                return Hidden;
+
+            if (IsBomb)
+                return Bomb;
+
+            return NumBombNeighbors.ToString();
+
         }
    
     }
